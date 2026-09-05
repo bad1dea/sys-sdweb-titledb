@@ -1,0 +1,30 @@
+name: update-title-pack
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * *'
+  push:
+    paths: ['overrides.tsv', 'pack_titles.py', '.github/workflows/update.yml']
+permissions:
+  contents: write
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download US English TitleDB
+        run: curl --fail --location --retry 3 --output US.en.json https://raw.githubusercontent.com/blawar/titledb/master/US.en.json
+      - name: Build compact pack
+        run: python3 pack_titles.py US.en.json titles.pack --overrides overrides.tsv
+      - name: Publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sys-sdweb-titles
+          path: titles.pack
+      - name: Commit updated pack
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add titles.pack
+          git diff --cached --quiet || git commit -m "Update title database"
+          git push
