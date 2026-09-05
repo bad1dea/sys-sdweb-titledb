@@ -20,7 +20,11 @@ def main():
     data=json.loads(Path(args.json).read_text(encoding='utf-8'))
     names={}
     for key,obj in data.items():
-        tid=str(key).upper()
+        # titledb currently uses an internal numeric product key while the
+        # actual Switch title ID is the record's `id` field.  Accept both
+        # layouts so older/local exports continue to work.
+        tid = obj.get('id', key) if isinstance(obj, dict) else key
+        tid=str(tid).upper()
         if len(tid)!=16:
             continue
         try: int(tid,16)
