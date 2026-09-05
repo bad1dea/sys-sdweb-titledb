@@ -38,10 +38,10 @@ def main():
         off=len(strings); strings.extend(raw); strings.append(0)
         records.append((int(tid,16),off))
     string_offset=32+len(records)*0x30
-    # The reader uses a fixed 32-byte header; the packed fields occupy 28
-    # bytes, followed by four reserved bytes for alignment.
-    out=bytearray(struct.pack('<8sIIIQ',b'CFTITLE1',1,0x30,len(records),string_offset))
-    out.extend(b'\0' * 4)
+    # Header layout: magic, version, record size, count, reserved, strings
+    # offset. This places the 64-bit strings offset at byte 24 as required by
+    # the sys-sdweb reader.
+    out=bytearray(struct.pack('<8sIIIIQ',b'CFTITLE1',1,0x30,len(records),0,string_offset))
     for tid,off in records:
         rec=bytearray(0x30); struct.pack_into('<QII',rec,0,tid,off,0); struct.pack_into('<I',rec,44,1); out.extend(rec)
     out.extend(strings); Path(args.output).write_bytes(out)
